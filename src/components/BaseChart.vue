@@ -13,27 +13,46 @@ const props = defineProps<{
 
 const elRef = ref<HTMLDivElement | null>(null)
 const chart = shallowRef<echarts.ECharts | null>(null)
+let observer: ResizeObserver | null = null
 
 const render = () => {
-  if (chart.value && props.option) {
-    chart.value.setOption(props.option, true)
-  }
+  chart.value?.setOption(props.option, true)
 }
 
 const resize = () => chart.value?.resize()
 
 onMounted(() => {
-  if (elRef.value) {
-    chart.value = echarts.init(elRef.value)
+  if (!elRef.value) return
+
+  // 容器有尺寸后再初始化，避免 ECharts 0 尺寸告警
+  const initWhenReady = () => {
+    const el = elRef.value
+    if (!el || chart.value) return
+    if (el.clientWidth === 0 || el.clientHeight === 0) return
+    chart.value = echarts.init(el)
     render()
-    window.addEventListener('resize', resize)
   }
+
+  initWhenReady()
+
+  observer = new ResizeObserver(() => {
+    if (!chart.value) {
+      initWhenReady()
+    } else {
+      resize()
+    }
+  })
+  observer.observe(elRef.value)
+
+  window.addEventListener('resize', resize)
 })
 
 watch(() => props.option, render, { deep: true })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', resize)
+  observer?.disconnect()
+  observer = null
   chart.value?.dispose()
   chart.value = null
 })

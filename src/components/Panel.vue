@@ -9,7 +9,7 @@
       </div>
       <div class="panel__sub" v-if="sub">{{ sub }}</div>
     </div>
-    <div class="panel__body">
+    <div class="panel__body" :style="{ padding: (bodyPad ?? 8) + 'px' }">
       <slot />
     </div>
     <span class="corner corner--tl"></span>
@@ -23,6 +23,7 @@
 defineProps<{
   title: string
   sub?: string
+  bodyPad?: number
 }>()
 </script>
 
